@@ -103,7 +103,7 @@ jobs:
 
       solution_file: ${{ steps.analysis.outputs.solution_file }}
 
-      project_file: ${{ steps.analysis.outputs.project_file }}
+      application_project: ${{ steps.analysis.outputs.application_project }}
 
       application_dll: ${{ steps.analysis.outputs.application_dll }}
 
@@ -310,7 +310,7 @@ jobs:
           BUILD_TOOL: ${{ needs.analyze.outputs.build_tool }}
           FRAMEWORK: ${{ needs.analyze.outputs.framework }}
           DOTNET_VERSION: ${{ needs.analyze.outputs.dotnet_version }}
-          PROJECT_FILE: ${{ needs.analyze.outputs.project_file }}
+          APPLICATION_PROJECT: ${{ needs.analyze.outputs.application_project }}
           SOLUTION_FILE: ${{ needs.analyze.outputs.solution_file }}
           APPLICATION_DLL: ${{ needs.analyze.outputs.application_dll }}
           DEPLOYMENT_TARGET: ${{ needs.analyze.outputs.deployment_target }}
@@ -389,7 +389,7 @@ jobs:
 
           SOLUTION_FILE: ${{ needs.analyze.outputs.solution_file }}
 
-          PROJECT_FILE: ${{ needs.analyze.outputs.project_file }}
+          APPLICATION_PROJECT: ${{ needs.analyze.outputs.application_project }}
 
           APPLICATION_DLL: ${{ needs.analyze.outputs.application_dll }}
 
@@ -568,7 +568,7 @@ jobs:
 
           SOLUTION_FILE: ${{ needs.analyze.outputs.solution_file }}
 
-          PROJECT_FILE: ${{ needs.analyze.outputs.project_file }}
+          APPLICATION_PROJECT: ${{ needs.analyze.outputs.application_project }}
 
           APPLICATION_DLL: ${{ needs.analyze.outputs.application_dll }}
 
