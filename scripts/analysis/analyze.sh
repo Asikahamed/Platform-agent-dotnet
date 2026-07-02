@@ -3,7 +3,7 @@
 set -ex
 
 echo "========================================="
-echo "Platform Agent - Repository Analysis"
+echo "Platform Agent -- Repository Analysis"
 echo "========================================="
 
 echo ""

@@ -127,20 +127,6 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
           path: application
 
-      - name: Debug - Application Repository
-        run: |
-          echo "Current Directory"
-          pwd
-
-          echo ""
-          echo "Application Home"
-          echo "$APP_HOME"
-
-          echo ""
-          echo "Repository Structure"
-          ls -la
-          find . -maxdepth 4
-        working-directory: application
 
       ############################################################
       # Checkout Platform Repository
@@ -154,47 +140,11 @@ jobs:
           ref: main
           token: ${{ secrets.GH_TOKEN }}
 
-      - name: Debug Environment
-        run: |
-          echo "APP_HOME=$APP_HOME"
-          echo "PLATFORM_HOME=$PLATFORM_HOME"
-
-      - name: Debug Current Directory
-        run: |
-          pwd
-          ls -la
           
       ############################################################
       # Analyze
       ############################################################
-      - name: Debug Environment
-        env:
-          APP_HOME: ${{ github.workspace }}/application
-          PLATFORM_HOME: ${{ github.workspace }}/platform
-        run: |
-
-          echo "Workspace:"
-          pwd
-
-          echo ""
-          echo "APP_HOME=$APP_HOME"
-          echo "PLATFORM_HOME=$PLATFORM_HOME"
-
-          echo ""
-          echo "Application repository"
-          find "$APP_HOME" -maxdepth 3
-
-          echo ""
-          echo "Platform repository"
-          find "$PLATFORM_HOME/scripts" -maxdepth 2
-
-          echo ""
-          echo "dirname usages"
-          grep -n "dirname" "$PLATFORM_HOME/scripts/analysis/analyze.sh"
-
-          echo ""
-          echo "First 80 lines of analyze.sh"
-          sed -n '1,80p' "$PLATFORM_HOME/scripts/analysis/analyze.sh"
+      
           
       - name: Analyze Repository
         id: analysis
