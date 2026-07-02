@@ -1,10 +1,28 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 echo "========================================="
 echo "Platform Agent - Repository Analysis"
 echo "========================================="
+
+echo ""
+echo "========== DEBUG =========="
+
+pwd
+
+echo ""
+echo "Searching .csproj"
+
+find . -name "*.csproj"
+
+echo ""
+echo "Searching solution"
+
+find . -name "*.sln"
+
+echo ""
+echo "==========================="
 
 ##############################################
 # Detect Application
@@ -24,6 +42,7 @@ APPLICATION_PROJECT=""
 
 echo ""
 echo "Searching for deployable .NET application..."
+
 
 ##############################################
 # ASP.NET Core Web SDK
@@ -93,6 +112,9 @@ if [ -z "$APPLICATION_PROJECT" ]; then
     echo "No deployable .NET application found."
     exit 1
 fi
+
+echo ""
+echo "APPLICATION_PROJECT='$APPLICATION_PROJECT'"
 
 APP_PATH=$(dirname "$APPLICATION_PROJECT")
 
