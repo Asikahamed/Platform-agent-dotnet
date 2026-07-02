@@ -127,6 +127,21 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
           path: application
 
+      - name: Debug - Application Repository
+        run: |
+          echo "Current Directory"
+          pwd
+
+          echo ""
+          echo "Application Home"
+          echo "$APP_HOME"
+
+          echo ""
+          echo "Repository Structure"
+          ls -la
+          find . -maxdepth 4
+        working-directory: application
+
       ############################################################
       # Checkout Platform Repository
       ############################################################
@@ -139,7 +154,16 @@ jobs:
           ref: main
           token: ${{ secrets.GH_TOKEN }}
 
+      - name: Debug Environment
+        run: |
+          echo "APP_HOME=$APP_HOME"
+          echo "PLATFORM_HOME=$PLATFORM_HOME"
 
+      - name: Debug Current Directory
+        run: |
+          pwd
+          ls -la
+          
       ############################################################
       # Analyze
       ############################################################
