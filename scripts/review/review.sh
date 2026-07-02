@@ -6,7 +6,7 @@ echo "Generating Platform Review..."
 
 cat <<EOF >> "$GITHUB_STEP_SUMMARY"
 
-# 🤖 Platform Agent Review
+# 🤖 .NET Platform Agent Review
 
 ## Repository Analysis
 
@@ -15,8 +15,11 @@ cat <<EOF >> "$GITHUB_STEP_SUMMARY"
 | Language | ${LANGUAGE} |
 | Framework | ${FRAMEWORK} |
 | Build Tool | ${BUILD_TOOL} |
-| Java Version | ${JAVA_VERSION} |
+| .NET Version | ${DOTNET_VERSION} |
 | Deployment Target | ${DEPLOYMENT_TARGET} |
+| Solution File | ${SOLUTION_FILE} |
+| Project File | ${PROJECT_FILE} |
+| Application DLL | ${APPLICATION_DLL} |
 
 ---
 
@@ -34,10 +37,9 @@ cat <<EOF >> "$GITHUB_STEP_SUMMARY"
 
 - ✅ Dockerfile
 - ✅ .dockerignore
-- ✅ Terraform
-- ✅ GitHub Actions
-- ✅ Trivy
-- ✅ Gitleaks
+- ✅ Terraform Configuration
+- ✅ GitHub Actions CI Workflow
+- ✅ GitHub Actions CD Workflow
 
 ---
 

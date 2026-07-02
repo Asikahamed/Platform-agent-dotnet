@@ -83,19 +83,34 @@ jobs:
 
   analyze:
 
+    name: Analyze Repository
+
     runs-on: ubuntu-latest
 
-    needs: checkout
-
     outputs:
+
       app_path: ${{ steps.analysis.outputs.app_path }}
+
       language: ${{ steps.analysis.outputs.language }}
+
       build_tool: ${{ steps.analysis.outputs.build_tool }}
+
       framework: ${{ steps.analysis.outputs.framework }}
-      java_version: ${{ steps.analysis.outputs.java_version }}
+
+      dotnet_version: ${{ steps.analysis.outputs.dotnet_version }}
+
       deployment_target: ${{ steps.analysis.outputs.deployment_target }}
+
+      solution_file: ${{ steps.analysis.outputs.solution_file }}
+
+      project_file: ${{ steps.analysis.outputs.project_file }}
+
+      application_dll: ${{ steps.analysis.outputs.application_dll }}
+
       has_dockerfile: ${{ steps.analysis.outputs.has_dockerfile }}
+
       has_terraform: ${{ steps.analysis.outputs.has_terraform }}
+
       has_workflows: ${{ steps.analysis.outputs.has_workflows }}
 
     steps:
@@ -154,6 +169,16 @@ jobs:
       - checkout
       - analyze
 
+    outputs:
+
+      docker_agent: ${{ steps.load.outputs.docker_agent }}
+
+      terraform_agent: ${{ steps.load.outputs.terraform_agent }}
+
+      cicd_agent: ${{ steps.load.outputs.cicd_agent }}
+
+      kubernetes_agent: ${{ steps.load.outputs.kubernetes_agent }}
+
     steps:
 
       ############################################################
@@ -197,6 +222,7 @@ jobs:
           find "$PLATFORM_HOME" -maxdepth 3 | sort
           
       - name: Load Agent Prompts
+        id: load
         env:
           PLATFORM_HOME: ${{ github.workspace }}/platform
 
@@ -259,6 +285,10 @@ jobs:
           LANGUAGE: ${{ needs.analyze.outputs.language }}
           BUILD_TOOL: ${{ needs.analyze.outputs.build_tool }}
           FRAMEWORK: ${{ needs.analyze.outputs.framework }}
+          DOTNET_VERSION: ${{ needs.analyze.outputs.dotnet_version }}
+          PROJECT_FILE: ${{ needs.analyze.outputs.project_file }}
+          SOLUTION_FILE: ${{ needs.analyze.outputs.solution_file }}
+          APPLICATION_DLL: ${{ needs.analyze.outputs.application_dll }}
           DEPLOYMENT_TARGET: ${{ needs.analyze.outputs.deployment_target }}
 
         run: |
@@ -324,6 +354,22 @@ jobs:
           PLATFORM_HOME: ${{ github.workspace }}/platform
 
           APP_PATH: ${{ needs.analyze.outputs.app_path }}
+
+          LANGUAGE: ${{ needs.analyze.outputs.language }}
+
+          BUILD_TOOL: ${{ needs.analyze.outputs.build_tool }}
+
+          FRAMEWORK: ${{ needs.analyze.outputs.framework }}
+
+          DOTNET_VERSION: ${{ needs.analyze.outputs.dotnet_version }}
+
+          SOLUTION_FILE: ${{ needs.analyze.outputs.solution_file }}
+
+          PROJECT_FILE: ${{ needs.analyze.outputs.project_file }}
+
+          APPLICATION_DLL: ${{ needs.analyze.outputs.application_dll }}
+
+          DEPLOYMENT_TARGET: ${{ needs.analyze.outputs.deployment_target }}
 
           HAS_DOCKERFILE: ${{ needs.analyze.outputs.has_dockerfile }}
           HAS_TERRAFORM: ${{ needs.analyze.outputs.has_terraform }}
@@ -444,6 +490,8 @@ jobs:
       - decision-engine
       - generate-assets
 
+    if: always()
+
     steps:
 
       ############################################################
@@ -488,9 +536,20 @@ jobs:
 
           BUILD_TOOL: ${{ needs.analyze.outputs.build_tool }}
 
-          JAVA_VERSION: ${{ needs.analyze.outputs.java_version }}
+          DOTNET_VERSION: ${{ needs.analyze.outputs.dotnet_version }}
+
+          VERSION_NAME: ".NET Version"
+
+          VERSION_VALUE: ${{ needs.analyze.outputs.dotnet_version }}
+
+          SOLUTION_FILE: ${{ needs.analyze.outputs.solution_file }}
+
+          PROJECT_FILE: ${{ needs.analyze.outputs.project_file }}
+
+          APPLICATION_DLL: ${{ needs.analyze.outputs.application_dll }}
 
           DEPLOYMENT_TARGET: ${{ needs.analyze.outputs.deployment_target }}
+          
 
           DOCKER_TEMPLATE: ${{ needs.decision-engine.outputs.docker_template }}
 

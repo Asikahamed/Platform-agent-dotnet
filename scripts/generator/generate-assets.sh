@@ -89,38 +89,6 @@ else
 
 fi
 
-# ##############################################
-# # GitHub Actions
-# ##############################################
-
-# if [ "$HAS_WORKFLOWS" != "true" ]; then
-
-#     echo ""
-#     echo "Generating GitHub Actions..."
-
-#     echo ""
-#     echo "===== Selected Template ====="
-#     ls -la "$CICD_TEMPLATE"
-
-#     echo ""
-#     echo "===== Template Preview ====="
-#     head -20 "$CICD_TEMPLATE/ci-cd.yml"
-
-#     mkdir -p "$TARGET_DIR/.github/workflows"
-
-#     cp "$CICD_TEMPLATE/ci-cd.yml" \
-#        "$TARGET_DIR/.github/workflows/ci-cd.yml"
-
-#     echo ""
-#     echo "===== Generated Workflow ====="
-#     head -20 "$TARGET_DIR/.github/workflows/ci-cd.yml"
-
-# else
-
-#     echo "GitHub workflow already exists."
-
-# fi
-
 ##############################################
 # GitHub Actions
 ##############################################

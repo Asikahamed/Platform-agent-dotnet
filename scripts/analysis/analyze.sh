@@ -10,56 +10,183 @@ echo "========================================="
 # Detect Application
 ##############################################
 
-APP_PATH=$(find . -type f -name "pom.xml" | head -1 | xargs dirname)
+##############################################
+# Detect Solution
+##############################################
 
-if [ -z "$APP_PATH" ]; then
-    echo "No Java application found."
+SOLUTION_FILE=$(find . -type f -name "*.sln" | head -1)
+
+##############################################
+# Detect Deployable Project
+##############################################
+
+APPLICATION_PROJECT=""
+
+echo ""
+echo "Searching for deployable .NET application..."
+
+##############################################
+# ASP.NET Core Web SDK
+##############################################
+
+while IFS= read -r project
+do
+    if [[ "$project" =~ (Test|Tests|UnitTest|UnitTests|IntegrationTest|IntegrationTests|Benchmark) ]]; then
+        continue
+    fi
+
+    if grep -q "Microsoft.NET.Sdk.Web" "$project"; then
+        APPLICATION_PROJECT="$project"
+        echo "Detected ASP.NET Core project."
+        break
+    fi
+
+done < <(find . -type f -name "*.csproj")
+
+##############################################
+# Worker Service
+##############################################
+
+if [ -z "$APPLICATION_PROJECT" ]; then
+
+    while IFS= read -r project
+    do
+        if [[ "$project" =~ (Test|Tests|UnitTest|UnitTests|IntegrationTest|IntegrationTests|Benchmark) ]]; then
+            continue
+        fi
+
+        if grep -q "Microsoft.NET.Sdk.Worker" "$project"; then
+            APPLICATION_PROJECT="$project"
+            echo "Detected Worker Service project."
+            break
+        fi
+
+    done < <(find . -type f -name "*.csproj")
+
+fi
+
+##############################################
+# Any Non-Test Project
+##############################################
+
+if [ -z "$APPLICATION_PROJECT" ]; then
+
+    while IFS= read -r project
+    do
+        if [[ "$project" =~ (Test|Tests|UnitTest|UnitTests|IntegrationTest|IntegrationTests|Benchmark) ]]; then
+            continue
+        fi
+
+        APPLICATION_PROJECT="$project"
+        echo "Detected generic .NET project."
+        break
+
+    done < <(find . -type f -name "*.csproj")
+
+fi
+
+##############################################
+# Validate
+##############################################
+
+if [ -z "$APPLICATION_PROJECT" ]; then
+    echo "No deployable .NET application found."
     exit 1
 fi
 
+APP_PATH=$(dirname "$APPLICATION_PROJECT")
+
+echo ""
 echo "Application Path : $APP_PATH"
 
+if [ -n "$SOLUTION_FILE" ]; then
+    echo "Solution File    : $SOLUTION_FILE"
+else
+    echo "Solution File    : Not Found"
+fi
+
+echo "Application File : $APPLICATION_PROJECT"
+
+##############################################
+# Outputs
+##############################################
+
 echo "app_path=$APP_PATH" >> "$GITHUB_OUTPUT"
+echo "solution_file=$SOLUTION_FILE" >> "$GITHUB_OUTPUT"
+echo "application_project=$APPLICATION_PROJECT" >> "$GITHUB_OUTPUT"
 
 ##############################################
 # Language
 ##############################################
 
-echo "language=java" >> "$GITHUB_OUTPUT"
+LANGUAGE="dotnet"
+
+echo "language=$LANGUAGE" >> "$GITHUB_OUTPUT"
 
 ##############################################
 # Build Tool
 ##############################################
 
-echo "build_tool=maven" >> "$GITHUB_OUTPUT"
+BUILD_TOOL="dotnet"
+
+echo "build_tool=$BUILD_TOOL" >> "$GITHUB_OUTPUT"
 
 ##############################################
-# Java Version
+# Target Framework
 ##############################################
 
-JAVA_VERSION=$(grep -oPm1 '(?<=<java.version>)[^<]+' "$APP_PATH/pom.xml" || true)
+TARGET_FRAMEWORK=$(grep -oPm1 '(?<=<TargetFramework>)[^<]+' "$APPLICATION_PROJECT" || true)
 
-if [ -z "$JAVA_VERSION" ]; then
-    JAVA_VERSION=17
+if [ -z "$TARGET_FRAMEWORK" ]; then
+    TARGET_FRAMEWORK="net8.0"
 fi
 
-echo "Detected Java Version : $JAVA_VERSION"
+DOTNET_VERSION=$(echo "$TARGET_FRAMEWORK" | sed 's/net//')
 
-echo "java_version=$JAVA_VERSION" >> "$GITHUB_OUTPUT"
+echo "Detected Target Framework : $TARGET_FRAMEWORK"
+
+echo "target_framework=$TARGET_FRAMEWORK" >> "$GITHUB_OUTPUT"
+echo "dotnet_version=$DOTNET_VERSION" >> "$GITHUB_OUTPUT"
 
 ##############################################
 # Framework
 ##############################################
 
-if grep -qi "spring-boot" "$APP_PATH/pom.xml"; then
-    FRAMEWORK="springboot"
-else
-    FRAMEWORK="java"
+FRAMEWORK="dotnet"
+
+if grep -q "Microsoft.NET.Sdk.Web" "$APPLICATION_PROJECT"; then
+
+    FRAMEWORK="aspnetcore"
+
+elif grep -q "Microsoft.NET.Sdk.Worker" "$APPLICATION_PROJECT"; then
+
+    FRAMEWORK="worker"
+
+elif grep -q "Microsoft.NET.Sdk" "$APPLICATION_PROJECT"; then
+
+    FRAMEWORK="dotnet"
+
 fi
 
 echo "Detected Framework : $FRAMEWORK"
 
 echo "framework=$FRAMEWORK" >> "$GITHUB_OUTPUT"
+
+##############################################
+# Application DLL
+##############################################
+
+ASSEMBLY_NAME=$(grep -oPm1 '(?<=<AssemblyName>)[^<]+' "$APPLICATION_PROJECT" || true)
+
+if [ -z "$ASSEMBLY_NAME" ]; then
+    ASSEMBLY_NAME=$(basename "$APPLICATION_PROJECT" .csproj)
+fi
+
+APPLICATION_DLL="${ASSEMBLY_NAME}.dll"
+
+echo "Detected Application DLL : $APPLICATION_DLL"
+
+echo "application_dll=$APPLICATION_DLL" >> "$GITHUB_OUTPUT"
 
 ##############################################
 # Deployment Target
@@ -104,31 +231,33 @@ WORKFLOW_DIR="$APP_PATH/.github/workflows"
 if [ -d "$WORKFLOW_DIR" ]; then
 
     echo ""
-    echo "Inspecting GitHub workflows..."
+    echo "Inspecting GitHub Workflows..."
 
-    for workflow in "$WORKFLOW_DIR"/*.yml "$WORKFLOW_DIR"/*.yaml; do
+    for workflow in "$WORKFLOW_DIR"/*.yml "$WORKFLOW_DIR"/*.yaml
+    do
 
         [ -e "$workflow" ] || continue
 
         FILE_NAME=$(basename "$workflow")
 
         ##########################################################
-        # Ignore Platform Agent caller workflow
+        # Ignore Platform Agent Caller Workflow
         ##########################################################
 
         if grep -q "Platform Agent" "$workflow" && \
            grep -q "platform-agent-reusable.yml" "$workflow"; then
 
-            echo "Ignoring Platform Agent caller workflow: $FILE_NAME"
+            echo "Ignoring Platform Agent caller workflow : $FILE_NAME"
             continue
 
         fi
 
         ##########################################################
-        # Found a real CI/CD workflow
+        # Application Workflow Found
         ##########################################################
 
-        echo "Detected application workflow: $FILE_NAME"
+        echo "Detected application workflow : $FILE_NAME"
+
         HAS_WORKFLOWS=true
         break
 
@@ -143,13 +272,28 @@ echo "has_workflows=$HAS_WORKFLOWS" >> "$GITHUB_OUTPUT"
 ##############################################
 
 echo ""
-echo "========== Repository Summary =========="
+echo "========================================="
+echo "Repository Summary"
+echo "========================================="
 
 echo "Application Path      : $APP_PATH"
-echo "Language              : java"
+
+if [ -n "$SOLUTION_FILE" ]; then
+    echo "Solution File         : $SOLUTION_FILE"
+else
+    echo "Solution File         : Not Found"
+fi
+
+echo "Application Project   : $APPLICATION_PROJECT"
+echo "Application DLL       : $APPLICATION_DLL"
+
+echo ""
+
+echo "Language              : $LANGUAGE"
 echo "Framework             : $FRAMEWORK"
-echo "Build Tool            : maven"
-echo "Java Version          : $JAVA_VERSION"
+echo "Build Tool            : $BUILD_TOOL"
+echo ".NET Version          : $DOTNET_VERSION"
+echo "Target Framework      : $TARGET_FRAMEWORK"
 echo "Deployment Target     : $DEPLOYMENT_TARGET"
 
 echo ""

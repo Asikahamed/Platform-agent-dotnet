@@ -1,4 +1,4 @@
-name: Java CI Pipeline
+name: .NET CI Pipeline
 
 on:
   push:
@@ -6,15 +6,16 @@ on:
       - main
       - develop
       - feature/**
-      
+
   workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  JAVA_VERSION: "17"
+  DOTNET_VERSION: "8.0.x"
   IMAGE_NAME: ${{ github.event.repository.name }}
+  PROJECT_FILE: "<PROJECT_FILE>"
 
 jobs:
 
@@ -33,18 +34,23 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: maven
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Verify Maven
-        run: mvn -version
+      - name: Verify .NET SDK
+        run: dotnet --info
 
-      - name: Compile Application
-        run: mvn clean compile
+      - name: Restore Dependencies
+        run: dotnet restore "${{ env.PROJECT_FILE }}"
+
+      - name: Build Application
+        run: |
+          dotnet build \
+            "${{ env.PROJECT_FILE }}" \
+            --configuration Release \
+            --no-restore
 
 ##############################################################################
 # Test
@@ -63,18 +69,28 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: maven
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore Dependencies
+        run: dotnet restore "${{ env.PROJECT_FILE }}"
+
+      - name: Build Application
+        run: |
+          dotnet build \
+            "${{ env.PROJECT_FILE }}" \
+            --configuration Release \
+            --no-restore
 
       - name: Run Unit Tests
-        run: mvn test
-
-      - name: Generate JaCoCo Report
-        run: mvn jacoco:report
+        run: |
+          dotnet test \
+            "${{ env.PROJECT_FILE }}" \
+            --configuration Release \
+            --no-build \
+            --collect:"XPlat Code Coverage"
 
       - name: Upload Test Reports
         if: always()
@@ -82,8 +98,7 @@ jobs:
         with:
           name: test-report
           path: |
-            target/surefire-reports
-            target/site/jacoco
+            **/TestResults/**
           if-no-files-found: ignore
 
 ##############################################################################
@@ -103,21 +118,34 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: maven
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Build JAR
-        run: mvn clean package -DskipTests
+      - name: Restore Dependencies
+        run: dotnet restore "${{ env.PROJECT_FILE }}"
 
-      - name: Upload Application Artifact
+      - name: Build Application
+        run: |
+          dotnet build \
+            "${{ env.PROJECT_FILE }}" \
+            --configuration Release \
+            --no-restore
+
+      - name: Publish Application
+        run: |
+          dotnet publish \
+            "${{ env.PROJECT_FILE }}" \
+            --configuration Release \
+            --output publish \
+            --no-build
+
+      - name: Upload Published Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: springboot-jar
-          path: target/*.jar
+          name: dotnet-publish
+          path: publish
           retention-days: 7
 
 ##############################################################################
@@ -137,15 +165,15 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Download JAR Artifact
+      - name: Download Published Artifact
         uses: actions/download-artifact@v4
         with:
-          name: springboot-jar
-          path: target
+          name: dotnet-publish
+          path: publish
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        
+
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
@@ -162,28 +190,25 @@ jobs:
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
-
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          # Only pushes to the registry on a true push event, not on PRs
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-
       - name: Pipeline Summary
         run: |
           echo "========================================"
-          echo "Java CI Pipeline"
+          echo ".NET CI Pipeline"
           echo "========================================"
-          echo "Java Version : ${{ env.JAVA_VERSION }}"
-          echo "Build Tool   : Maven"
-          echo "Framework    : Spring Boot"
-          echo "Artifact     : springboot-jar"
+          echo ".NET SDK     : ${{ env.DOTNET_VERSION }}"
+          echo "Build Tool   : dotnet CLI"
+          echo "Configuration: Release"
+          echo "Artifact     : dotnet-publish"
           echo "Docker Image : ${{ secrets.REGISTRY_USERNAME }}/${{ env.IMAGE_NAME }}"
           echo "========================================"

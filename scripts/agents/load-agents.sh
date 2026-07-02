@@ -30,67 +30,67 @@ if [ ! -d "$AGENT_DIR" ]; then
 fi
 
 ##############################################
-# Docker Agent
+# Required Agents
 ##############################################
 
-DOCKER_AGENT="$AGENT_DIR/docker-agent.agent.md"
+REQUIRED_AGENTS=(
+    docker-agent
+    terraform-agent
+    cicd-agent
+)
 
-if [ ! -f "$DOCKER_AGENT" ]; then
-    echo "ERROR: Docker Agent not found."
-    exit 1
-fi
+echo ""
+echo "Loading required agents..."
 
-echo "Loaded Docker Agent"
+for agent in "${REQUIRED_AGENTS[@]}"
+do
 
-##############################################
-# Terraform Agent
-##############################################
+    AGENT_FILE="$AGENT_DIR/$agent.agent.md"
 
-TERRAFORM_AGENT="$AGENT_DIR/terraform-agent.agent.md"
+    if [ ! -f "$AGENT_FILE" ]; then
+        echo "ERROR: $agent.agent.md not found."
+        exit 1
+    fi
 
-if [ ! -f "$TERRAFORM_AGENT" ]; then
-    echo "ERROR: Terraform Agent not found."
-    exit 1
-fi
+    echo "Loaded $agent"
 
-echo "Loaded Terraform Agent"
+    OUTPUT_NAME=$(echo "$agent" | tr '-' '_')
 
-##############################################
-# CI/CD Agent
-##############################################
+    echo "${OUTPUT_NAME}=$AGENT_FILE" >> "$GITHUB_OUTPUT"
 
-CICD_AGENT="$AGENT_DIR/cicd-agent.agent.md"
-
-if [ ! -f "$CICD_AGENT" ]; then
-    echo "ERROR: CI/CD Agent not found."
-    exit 1
-fi
-
-echo "Loaded CI/CD Agent"
+done
 
 ##############################################
-# Kubernetes Agent (Optional)
+# Optional Agents
 ##############################################
 
-KUBERNETES_AGENT="$AGENT_DIR/kubernetes-agent.agent.md"
+OPTIONAL_AGENTS=(
+    kubernetes-agent
+)
 
-if [ -f "$KUBERNETES_AGENT" ]; then
-    echo "Loaded Kubernetes Agent"
-else
-    echo "Kubernetes Agent not found (optional)"
-fi
+echo ""
+echo "Loading optional agents..."
 
-##############################################
-# Export Outputs
-##############################################
+for agent in "${OPTIONAL_AGENTS[@]}"
+do
 
-echo "docker_agent=$DOCKER_AGENT" >> "$GITHUB_OUTPUT"
-echo "terraform_agent=$TERRAFORM_AGENT" >> "$GITHUB_OUTPUT"
-echo "cicd_agent=$CICD_AGENT" >> "$GITHUB_OUTPUT"
+    AGENT_FILE="$AGENT_DIR/$agent.agent.md"
 
-if [ -f "$KUBERNETES_AGENT" ]; then
-    echo "kubernetes_agent=$KUBERNETES_AGENT" >> "$GITHUB_OUTPUT"
-fi
+    if [ -f "$AGENT_FILE" ]; then
+
+        echo "Loaded $agent"
+
+        OUTPUT_NAME=$(echo "$agent" | tr '-' '_')
+
+        echo "${OUTPUT_NAME}=$AGENT_FILE" >> "$GITHUB_OUTPUT"
+
+    else
+
+        echo "$agent not found (optional)"
+
+    fi
+
+done
 
 ##############################################
 # Display Loaded Agents
@@ -101,27 +101,35 @@ echo "========================================="
 echo "Loaded AI Agents"
 echo "========================================="
 
-echo ""
-echo "Docker Agent"
-echo "-----------------------------------------"
-cat "$DOCKER_AGENT"
+for agent in "${REQUIRED_AGENTS[@]}"
+do
 
-echo ""
-echo "Terraform Agent"
-echo "-----------------------------------------"
-cat "$TERRAFORM_AGENT"
+    AGENT_FILE="$AGENT_DIR/$agent.agent.md"
 
-echo ""
-echo "CI/CD Agent"
-echo "-----------------------------------------"
-cat "$CICD_AGENT"
-
-if [ -f "$KUBERNETES_AGENT" ]; then
     echo ""
-    echo "Kubernetes Agent"
+    echo "$agent"
     echo "-----------------------------------------"
-    cat "$KUBERNETES_AGENT"
-fi
+
+    cat "$AGENT_FILE"
+
+done
+
+for agent in "${OPTIONAL_AGENTS[@]}"
+do
+
+    AGENT_FILE="$AGENT_DIR/$agent.agent.md"
+
+    if [ -f "$AGENT_FILE" ]; then
+
+        echo ""
+        echo "$agent"
+        echo "-----------------------------------------"
+
+        cat "$AGENT_FILE"
+
+    fi
+
+done
 
 echo ""
 echo "========================================="

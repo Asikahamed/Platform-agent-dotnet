@@ -57,8 +57,7 @@ echo "changes=true" >> "$GITHUB_OUTPUT"
 # Commit Changes
 ##############################################
 
-git commit -m "Platform Agent generated DevOps assets"
-
+git commit -m "chore(platform-agent): generate DevOps assets for ${LANGUAGE} application"
 ##############################################
 # Push Branch
 ##############################################

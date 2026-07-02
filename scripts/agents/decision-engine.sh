@@ -19,9 +19,9 @@ fi
 # Repository Context
 ##############################################
 
-LANGUAGE="${LANGUAGE:-java}"
-BUILD_TOOL="${BUILD_TOOL:-maven}"
-FRAMEWORK="${FRAMEWORK:-springboot}"
+LANGUAGE="${LANGUAGE:-dotnet}"
+BUILD_TOOL="${BUILD_TOOL:-dotnet}"
+FRAMEWORK="${FRAMEWORK:-aspnetcore}"
 DEPLOYMENT_TARGET="${DEPLOYMENT_TARGET:-cloudrun}"
 
 echo "Language          : $LANGUAGE"
@@ -37,18 +37,17 @@ echo ""
 
 case "$LANGUAGE" in
 
-    java)
-        DOCKER_TEMPLATE="$PLATFORM_HOME/platform-templates/docker/java"
-        ;;
-
     dotnet)
+
         DOCKER_TEMPLATE="$PLATFORM_HOME/platform-templates/docker/dotnet"
         ;;
 
     *)
+
         echo "Unsupported language: $LANGUAGE"
         exit 1
         ;;
+
 esac
 
 ##############################################
@@ -58,38 +57,59 @@ esac
 case "$DEPLOYMENT_TARGET" in
 
     cloudrun)
+
         TERRAFORM_TEMPLATE="$PLATFORM_HOME/platform-templates/terraform/gcp-cloudrun"
         ;;
 
     gke)
+
         TERRAFORM_TEMPLATE="$PLATFORM_HOME/platform-templates/terraform/gke"
         ;;
 
     *)
-        echo "Unsupported deployment target."
+
+        echo "Unsupported deployment target: $DEPLOYMENT_TARGET"
         exit 1
         ;;
+
 esac
 
 ##############################################
-# CI/CD Template
+# GitHub Actions Template
 ##############################################
 
 case "$LANGUAGE-$BUILD_TOOL-$DEPLOYMENT_TARGET" in
 
-    java-maven-cloudrun)
-        CICD_TEMPLATE="$PLATFORM_HOME/platform-templates/github-actions/java-maven-cloudrun"
-        ;;
+    dotnet-dotnet-cloudrun)
 
-    dotnet-*-*)
-        CICD_TEMPLATE="$PLATFORM_HOME/platform-templates/github-actions/dotnet"
+        CICD_TEMPLATE="$PLATFORM_HOME/platform-templates/github-actions/dotnet-cloudrun"
         ;;
 
     *)
-        echo "No matching CI/CD template."
+
+        echo "No matching CI/CD template found."
         exit 1
         ;;
+
 esac
+
+##############################################
+# Validate Templates
+##############################################
+
+for TEMPLATE in \
+    "$DOCKER_TEMPLATE" \
+    "$TERRAFORM_TEMPLATE" \
+    "$CICD_TEMPLATE"
+do
+
+    if [ ! -d "$TEMPLATE" ]; then
+        echo "Template not found:"
+        echo "$TEMPLATE"
+        exit 1
+    fi
+
+done
 
 ##############################################
 # Export Outputs
@@ -99,10 +119,19 @@ echo "docker_template=$DOCKER_TEMPLATE" >> "$GITHUB_OUTPUT"
 echo "terraform_template=$TERRAFORM_TEMPLATE" >> "$GITHUB_OUTPUT"
 echo "cicd_template=$CICD_TEMPLATE" >> "$GITHUB_OUTPUT"
 
+##############################################
+# Summary
+##############################################
+
 echo ""
 echo "========================================="
 echo "Selected Templates"
 echo "========================================="
-echo "Docker     : $DOCKER_TEMPLATE"
-echo "Terraform  : $TERRAFORM_TEMPLATE"
-echo "CI/CD      : $CICD_TEMPLATE"
+
+echo "Docker Template     : $DOCKER_TEMPLATE"
+echo "Terraform Template  : $TERRAFORM_TEMPLATE"
+echo "GitHub Actions      : $CICD_TEMPLATE"
+
+echo "========================================="
+echo "Decision Completed Successfully"
+echo "========================================="

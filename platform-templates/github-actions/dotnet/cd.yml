@@ -1,4 +1,4 @@
-name: Java CD Pipeline
+name: .NET CD Pipeline
 
 on:
   workflow_dispatch:
@@ -40,6 +40,12 @@ on:
         description: "Docker Image Tag"
         required: true
         default: latest
+        type: string
+
+      health_endpoint:
+        description: "Application health endpoint"
+        required: false
+        default: /
         type: string
 
 permissions:
@@ -199,12 +205,24 @@ jobs:
             --region="${{ inputs.region }}" \
             --format='value(status.url)')
 
-          echo "Application URL:"
-          echo "$URL"
+          HEALTH_URL="${URL}${{ inputs.health_endpoint }}"
+
+          echo "========================================"
+          echo "Application URL"
+          echo "========================================"
+          echo "$HEALTH_URL"
 
           echo ""
+          echo "Running Health Check..."
 
-          curl --fail --silent --show-error "$URL"
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            "$HEALTH_URL"
+
+          echo ""
+          echo "Health Check Passed"
 
 ##############################################################################
 # Deployment Summary
@@ -213,7 +231,7 @@ jobs:
       - name: Deployment Summary
         run: |
           echo "========================================"
-          echo "Java CD Pipeline Summary"
+          echo ".NET CD Pipeline Summary"
           echo "========================================"
           echo "Environment : ${{ inputs.environment }}"
           echo "Project ID  : ${{ inputs.project_id }}"
