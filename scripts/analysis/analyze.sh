@@ -6,23 +6,6 @@ echo "========================================="
 echo "Platform Agent -- Repository Analysis"
 echo "========================================="
 
-echo ""
-echo "========== DEBUG =========="
-
-pwd
-
-echo ""
-echo "Searching .csproj"
-
-find . -name "*.csproj"
-
-echo ""
-echo "Searching solution"
-
-find . -name "*.sln"
-
-echo ""
-echo "==========================="
 
 ##############################################
 # Detect Application
@@ -117,6 +100,14 @@ echo ""
 echo "APPLICATION_PROJECT='$APPLICATION_PROJECT'"
 
 APP_PATH=$(dirname "$APPLICATION_PROJECT")
+
+##############################################
+# Repository Root
+##############################################
+
+REPO_ROOT="."
+
+echo "repo_root=$REPO_ROOT" >> "$GITHUB_OUTPUT"
 
 echo ""
 echo "Application Path : $APP_PATH"
@@ -222,7 +213,7 @@ echo "deployment_target=$DEPLOYMENT_TARGET" >> "$GITHUB_OUTPUT"
 # Dockerfile
 ##############################################
 
-if [ -f "$APP_PATH/Dockerfile" ]; then
+if [ -f "$REPO_ROOT/Dockerfile" ]; then
     HAS_DOCKERFILE=true
 else
     HAS_DOCKERFILE=false
@@ -234,7 +225,7 @@ echo "has_dockerfile=$HAS_DOCKERFILE" >> "$GITHUB_OUTPUT"
 # Terraform
 ##############################################
 
-if [ -d "$APP_PATH/terraform" ]; then
+if [ -d "$REPO_ROOT/terraform" ]; then
     HAS_TERRAFORM=true
 else
     HAS_TERRAFORM=false
@@ -248,7 +239,7 @@ echo "has_terraform=$HAS_TERRAFORM" >> "$GITHUB_OUTPUT"
 
 HAS_WORKFLOWS=false
 
-WORKFLOW_DIR="$APP_PATH/.github/workflows"
+WORKFLOW_DIR="$REPO_ROOT/.github/workflows"
 
 if [ -d "$WORKFLOW_DIR" ]; then
 

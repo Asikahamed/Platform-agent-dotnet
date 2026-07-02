@@ -18,7 +18,7 @@ do
     fi
 done
 
-TARGET_DIR="$APP_HOME/$APP_PATH"
+TARGET_DIR="$APP_HOME/$REPO_ROOT"
 
 echo "Application Home : $APP_HOME"
 echo "Application Path : $APP_PATH"
