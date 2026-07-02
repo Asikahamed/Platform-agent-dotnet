@@ -57,17 +57,48 @@ if [ "$HAS_DOCKERFILE" != "true" ]; then
     echo ""
     echo "Generating Docker assets..."
 
+    ##########################################################
+    # Generate Dockerfile
+    ##########################################################
+
     cp "$DOCKER_TEMPLATE/Dockerfile" \
        "$TARGET_DIR/Dockerfile"
 
+    ##########################################################
+    # Generate .dockerignore
+    ##########################################################
+
     cp "$DOCKER_TEMPLATE/.dockerignore" \
        "$TARGET_DIR/.dockerignore"
+
+    ##########################################################
+    # Replace Dockerfile Placeholders
+    ##########################################################
+
+    echo ""
+    echo "Customizing Dockerfile..."
+
+    sed -i \
+        "s|<APPLICATION_DLL>|$APPLICATION_DLL|g" \
+        "$TARGET_DIR/Dockerfile"
+
+    echo "Dockerfile customized successfully."
+
+    ##########################################################
+    # Preview Generated Dockerfile
+    ##########################################################
+
+    echo ""
+    echo "===== Dockerfile Preview ====="
+
+    grep "ENTRYPOINT" "$TARGET_DIR/Dockerfile"
 
 else
 
     echo "Dockerfile already exists."
 
 fi
+
 
 ##############################################
 # Terraform
@@ -111,6 +142,19 @@ if [ "$HAS_WORKFLOWS" != "true" ]; then
        "$TARGET_DIR/.github/workflows/ci.yml"
 
     ##############################################
+    # Replace CI Placeholders
+    ##############################################
+
+    echo ""
+    echo "Customizing ci.yml..."
+
+    sed -i \
+        "s|<PROJECT_FILE>|$APPLICATION_PROJECT|g" \
+        "$TARGET_DIR/.github/workflows/ci.yml"
+
+    echo "ci.yml customized successfully."
+
+    ##############################################
     # CD Workflow
     ##############################################
 
@@ -126,11 +170,15 @@ if [ "$HAS_WORKFLOWS" != "true" ]; then
 
     echo ""
     echo "===== Generated CI Workflow ====="
-    head -20 "$TARGET_DIR/.github/workflows/ci.yml"
+
+    grep "PROJECT_FILE" \
+        "$TARGET_DIR/.github/workflows/ci.yml"
 
     echo ""
     echo "===== Generated CD Workflow ====="
-    head -20 "$TARGET_DIR/.github/workflows/cd.yml"
+
+    head -20 \
+        "$TARGET_DIR/.github/workflows/cd.yml"
 
 else
 
