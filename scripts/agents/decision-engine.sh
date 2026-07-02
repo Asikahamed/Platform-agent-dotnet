@@ -82,7 +82,7 @@ case "$LANGUAGE-$BUILD_TOOL-$DEPLOYMENT_TARGET" in
 
     dotnet-dotnet-cloudrun)
 
-        CICD_TEMPLATE="$PLATFORM_HOME/platform-templates/github-actions/dotnet-cloudrun"
+        CICD_TEMPLATE="$PLATFORM_HOME/platform-templates/github-actions/dotnet"
         ;;
 
     *)
