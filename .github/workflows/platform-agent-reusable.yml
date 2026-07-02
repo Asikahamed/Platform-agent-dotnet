@@ -61,7 +61,7 @@ jobs:
       - name: Checkout Platform Repository
         uses: actions/checkout@v4
         with:
-          repository: Asikahamed/Platform-agents
+          repository: Asikahamed/Platform-agent-dotnet
           ref: main
           token: ${{ secrets.GH_TOKEN }}
           path: platform
@@ -149,7 +149,7 @@ jobs:
       - name: Checkout Platform Repository
         uses: actions/checkout@v4
         with:
-          repository: Asikahamed/Platform-agents
+          repository: Asikahamed/Platform-agent-dotnet
           path: platform
           ref: main
           token: ${{ secrets.GH_TOKEN }}
@@ -253,7 +253,7 @@ jobs:
       - name: Checkout Platform Repository
         uses: actions/checkout@v4
         with:
-          repository: Asikahamed/Platform-agents
+          repository: Asikahamed/Platform-agent-dotnet
           ref: main
           token: ${{ secrets.GH_TOKEN }}
           path: platform
@@ -324,7 +324,7 @@ jobs:
       - name: Checkout Platform Repository
         uses: actions/checkout@v4
         with:
-          repository: Asikahamed/Platform-agents
+          repository: Asikahamed/Platform-agent-dotnet
           ref: main
           token: ${{ secrets.GH_TOKEN }}
           path: platform
@@ -390,7 +390,7 @@ jobs:
       - name: Checkout Platform Repository
         uses: actions/checkout@v4
         with:
-          repository: Asikahamed/Platform-agents
+          repository: Asikahamed/Platform-agent-dotnet
           ref: main
           token: ${{ secrets.GH_TOKEN }}
           path: platform
@@ -496,7 +496,7 @@ jobs:
       - name: Checkout Platform Repository
         uses: actions/checkout@v4
         with:
-          repository: Asikahamed/Platform-agents
+          repository: Asikahamed/Platform-agent-dotnet
           ref: main
           token: ${{ secrets.GH_TOKEN }}
           path: platform
@@ -566,7 +566,7 @@ jobs:
       - name: Checkout Platform Repository
         uses: actions/checkout@v4
         with:
-          repository: Asikahamed/Platform-agents
+          repository: Asikahamed/Platform-agent-dotnet
           ref: main
           token: ${{ secrets.GH_TOKEN }}
           path: platform
