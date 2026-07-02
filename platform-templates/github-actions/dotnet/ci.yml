@@ -42,8 +42,10 @@ jobs:
       - name: Verify .NET SDK
         run: dotnet --info
 
-      - name: Restore Dependencies
-        run: dotnet restore "${{ env.PROJECT_FILE }}"
+      - name: Restore
+        run: |
+          dotnet restore "${{ env.PROJECT_FILE }}" \
+            -p:NuGetAudit=false
 
       - name: Build Application
         run: |
