@@ -59,33 +59,22 @@ jobs:
 ##############################################################################
 
   sonar:
-
     name: SonarQube Analysis
-
     runs-on: ubuntu-latest
-    services:
-      sonarqube:
-        image: sonarqube:lts-community
-        ports:
-          - 9000:9000
-
     needs: build
 
     steps:
-
       ########################################################################
-      # Checkout
+      # Checkout Repository
       ########################################################################
-
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       ########################################################################
-      # Java (Required by SonarScanner)
+      # Java (Required by SonarScanner to run background logic)
       ########################################################################
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -93,18 +82,16 @@ jobs:
           java-version: "17"
 
       ########################################################################
-      # .NET
+      # .NET Core SDK Setup
       ########################################################################
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       ########################################################################
-      # Cache Sonar Packages
+      # Cache Sonar Packages (Speeds up subsequent pipeline runs)
       ########################################################################
-
       - name: Cache SonarQube Packages
         uses: actions/cache@v4
         with:
@@ -114,9 +101,8 @@ jobs:
             ${{ runner.os }}-sonar
 
       ########################################################################
-      # Cache Sonar Scanner
+      # Cache Sonar Scanner Tool
       ########################################################################
-
       - name: Cache SonarScanner
         id: cache-sonar
         uses: actions/cache@v4
@@ -127,9 +113,8 @@ jobs:
             ${{ runner.os }}-dotnet-sonarscanner
 
       ########################################################################
-      # Install Scanner
+      # Install SonarScanner Globally
       ########################################################################
-
       - name: Install SonarScanner
         if: steps.cache-sonar.outputs.cache-hit != 'true'
         run: |
@@ -142,20 +127,19 @@ jobs:
           echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
       ########################################################################
-      # Begin Analysis
+      # Begin Analysis (Connects via ngrok link and bypasses browser warning)
       ########################################################################
-
       - name: SonarQube Begin
         run: |
           dotnet sonarscanner begin \
             /k:".Net-mvc" \
             /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.ws.header="ngrok-skip-browser-warning:true"
 
       ########################################################################
-      # Restore
+      # Restore Dependencies
       ########################################################################
-
       - name: Restore Dependencies
         run: |
           dotnet restore \
@@ -163,9 +147,8 @@ jobs:
             -p:NuGetAudit=false
 
       ########################################################################
-      # Build
+      # Build Application (Scanner intercepts compilation details here)
       ########################################################################
-
       - name: Build Application
         run: |
           dotnet build \
@@ -174,25 +157,13 @@ jobs:
             --no-restore
 
       ########################################################################
-      # Test
+      # End Analysis (Uploads final analysis via ngrok tunnel)
       ########################################################################
-
-      - name: Run Unit Tests
-        run: |
-          dotnet test \
-            "${{ env.PROJECT_FILE }}" \
-            --configuration Release \
-            --no-build \
-            --collect:"XPlat Code Coverage"
-
-      ########################################################################
-      # End Analysis
-      ########################################################################
-
       - name: SonarQube End
         run: |
           dotnet sonarscanner end \
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
             
 ##############################################################################
 # Test
