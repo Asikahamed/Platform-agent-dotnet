@@ -55,6 +55,141 @@ jobs:
             --no-restore
 
 ##############################################################################
+# SonarQube Analysis
+##############################################################################
+
+  sonar:
+
+    name: SonarQube Analysis
+
+    runs-on: ubuntu-latest
+
+    needs: build
+
+    steps:
+
+      ########################################################################
+      # Checkout
+      ########################################################################
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      ########################################################################
+      # Java (Required by SonarScanner)
+      ########################################################################
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      ########################################################################
+      # .NET
+      ########################################################################
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      ########################################################################
+      # Cache Sonar Packages
+      ########################################################################
+
+      - name: Cache SonarQube Packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: |
+            ${{ runner.os }}-sonar
+
+      ########################################################################
+      # Cache Sonar Scanner
+      ########################################################################
+
+      - name: Cache SonarScanner
+        id: cache-sonar
+        uses: actions/cache@v4
+        with:
+          path: ~/.dotnet/tools
+          key: ${{ runner.os }}-dotnet-sonarscanner
+          restore-keys: |
+            ${{ runner.os }}-dotnet-sonarscanner
+
+      ########################################################################
+      # Install Scanner
+      ########################################################################
+
+      - name: Install SonarScanner
+        if: steps.cache-sonar.outputs.cache-hit != 'true'
+        run: |
+          dotnet tool install \
+            --global \
+            dotnet-sonarscanner
+
+      - name: Add .NET Tools to PATH
+        run: |
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      ########################################################################
+      # Begin Analysis
+      ########################################################################
+
+      - name: SonarQube Begin
+        run: |
+          dotnet sonarscanner begin \
+            /k:".Net-mvc" \
+            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+      ########################################################################
+      # Restore
+      ########################################################################
+
+      - name: Restore Dependencies
+        run: |
+          dotnet restore \
+            "${{ env.PROJECT_FILE }}" \
+            -p:NuGetAudit=false
+
+      ########################################################################
+      # Build
+      ########################################################################
+
+      - name: Build Application
+        run: |
+          dotnet build \
+            "${{ env.PROJECT_FILE }}" \
+            --configuration Release \
+            --no-restore
+
+      ########################################################################
+      # Test
+      ########################################################################
+
+      - name: Run Unit Tests
+        run: |
+          dotnet test \
+            "${{ env.PROJECT_FILE }}" \
+            --configuration Release \
+            --no-build \
+            --collect:"XPlat Code Coverage"
+
+      ########################################################################
+      # End Analysis
+      ########################################################################
+
+      - name: SonarQube End
+        run: |
+          dotnet sonarscanner end \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+            
+##############################################################################
 # Test
 ##############################################################################
 
@@ -64,7 +199,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    needs: build
+    needs: sonar
 
     steps:
 
